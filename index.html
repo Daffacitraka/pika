@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b1033">
+<title>Untuk Pika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #ffc4dd;
+    --lav: #d9c8ff;
+    --gold: #ffe6a8;
+    --teks: #fff4fa;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: #0b1033;
+    font-family: "Quicksand", "Segoe UI", "Nunito", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    color: var(--teks);
+    user-select: none; -webkit-user-select: none;
+    touch-action: none; overscroll-behavior: none;
+  }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #ui {
+    position: fixed; inset: 0; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+    text-align: center;
+  }
+  .lapisan {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; opacity: 0; transition: opacity .9s ease; pointer-events: none;
+  }
+  .lapisan.aktif { opacity: 1; }
+  .lapisan.aktif .bisa-klik { pointer-events: auto; }
+  .judul {
+    font-size: clamp(30px, 7.2vw, 58px); font-weight: 700; letter-spacing: .5px;
+    margin: 0; min-height: 1.3em;
+    background: linear-gradient(90deg, #ffd9ea, #fff1c9 50%, #e4d6ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 14px rgba(255, 180, 220, .55));
+  }
+  .baris {
+    font-size: clamp(17px, 4.3vw, 24px); font-weight: 500; line-height: 1.55;
+    max-width: 640px; margin: 18px auto 0; min-height: 3.2em;
+    text-shadow: 0 0 12px rgba(255, 190, 225, .45);
+  }
+  .kursor::after {
+    content: ""; display: inline-block; width: 2px; height: 1em; margin-left: 3px;
+    vertical-align: -0.12em; background: var(--pink); animation: kedip 1s steps(2) infinite;
+  }
+  @keyframes kedip { 50% { opacity: 0; } }
+  .petunjuk {
+    position: absolute; left: 0; right: 0; bottom: max(28px, env(safe-area-inset-bottom));
+    font-size: 14px; letter-spacing: 1px; opacity: .6;
+    animation: napas 2.6s ease-in-out infinite;
+  }
+  @keyframes napas { 50% { opacity: .25; } }
+  .kecil { font-size: clamp(14px, 3.6vw, 17px); opacity: .8; margin-top: 10px; }
+  #lapisBintang { justify-content: flex-start; }
+  #lapisBintang .atas { margin-top: 3vh; }
+  @media (orientation: portrait) { #lapisBintang .atas { margin-top: calc(17vh + 10px); } }
+  .hitung { font-size: 15px; letter-spacing: 2px; color: var(--gold); margin-top: 6px; opacity: .9; }
+  .kartu {
+    position: absolute; left: 50%; bottom: max(70px, calc(env(safe-area-inset-bottom) + 60px));
+    transform: translate(-50%, 20px); width: min(560px, calc(100% - 40px));
+    padding: 18px 22px; border-radius: 20px;
+    background: rgba(40, 28, 80, .55); border: 1px solid rgba(255, 210, 235, .28);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 10px 40px rgba(10, 0, 40, .45), inset 0 0 24px rgba(255, 190, 230, .08);
+    font-size: clamp(16px, 4vw, 20px); line-height: 1.5; font-weight: 500;
+    opacity: 0; transition: opacity .5s ease, transform .5s cubic-bezier(.2, .9, .3, 1.3);
+  }
+  .kartu.muncul { opacity: 1; transform: translate(-50%, 0); }
+  .tombol {
+    font: inherit; font-size: clamp(16px, 4.2vw, 19px); font-weight: 600;
+    padding: 13px 34px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .35);
+    color: #3b2150; cursor: pointer; outline: none;
+    background: linear-gradient(135deg, #ffd3e6, #e6d7ff);
+    box-shadow: 0 6px 22px rgba(255, 160, 210, .35);
+    transition: transform .25s cubic-bezier(.2, .9, .3, 1.4), box-shadow .25s ease, opacity .4s ease;
+  }
+  .tombol:hover { transform: translateY(-2px) scale(1.06); box-shadow: 0 10px 30px rgba(255, 170, 220, .55); }
+  .tombol:active { transform: scale(.96); }
+  .tombol.kalem {
+    background: rgba(255, 255, 255, .08); color: var(--teks);
+    box-shadow: none; border-color: rgba(255, 255, 255, .3);
+  }
+  #lanjutBintang { position: absolute; bottom: max(70px, calc(env(safe-area-inset-bottom) + 60px)); opacity: 0; }
+  #lanjutBintang.muncul { opacity: 1; }
+  .pilihan { position: relative; width: 100%; height: 140px; margin-top: 34px; }
+  #btnBoleh { position: absolute; left: 50%; top: 0; transform: translateX(calc(-100% - 14px)); }
+  #btnBoleh:hover { transform: translateX(calc(-100% - 14px)) translateY(-2px) scale(1.06); }
+  #btnNggak {
+    position: fixed; z-index: 5;
+    transition: left .35s cubic-bezier(.2, .9, .3, 1.2), top .35s cubic-bezier(.2, .9, .3, 1.2), transform .25s ease, opacity .4s ease;
+  }
+  #btnNggak:hover { transform: none; }
+  #suara {
+    position: fixed; right: max(14px, env(safe-area-inset-right)); top: max(14px, env(safe-area-inset-top));
+    z-index: 10; pointer-events: auto; font: inherit; font-size: 12px; letter-spacing: 1px;
+    padding: 7px 12px; border-radius: 999px; color: var(--teks); cursor: pointer;
+    background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .2);
+    opacity: 0; transition: opacity .6s ease;
+  }
+  #suara.muncul { opacity: .7; }
+  #ulang { margin-top: 30px; }
+</style>
+</head>
+<body>
+<canvas id="langit"></canvas>
+
+<div id="ui">
+  <!-- layar pembuka, sekalian buat nyalain audio (browser butuh sentuhan dulu) -->
+  <div class="lapisan" id="lapisAwal">
+    <p class="baris" style="min-height:0">ada sesuatu kecil buat kamu</p>
+    <div class="petunjuk">ketuk di mana aja buat mulai</div>
+  </div>
+
+  <div class="lapisan" id="lapisIntro">
+    <h1 class="judul" id="introJudul"></h1>
+    <p class="baris" id="introBaris"></p>
+    <div class="petunjuk">ketuk buat lanjut</div>
+  </div>
+
+  <div class="lapisan" id="lapisBintang">
+    <div class="atas">
+      <p class="baris" style="min-height:0;margin-top:0">Ada lima bintang yang lebih terang dari yang lain.<br>Coba ketuk satu-satu.</p>
+      <div class="hitung" id="hitung">0 / 5</div>
+    </div>
+    <div class="kartu" id="kartu"></div>
+    <button class="tombol bisa-klik" id="lanjutBintang">Lanjut</button>
+  </div>
+
+  <div class="lapisan" id="lapisTanya">
+    <h1 class="judul" style="font-size:clamp(26px,6vw,50px)">Besok boleh ngobrol lagi?</h1>
+    <p class="kecil" id="tanyaKecil">jawab jujur ya</p>
+    <div class="pilihan">
+      <button class="tombol bisa-klik" id="btnBoleh">Boleh</button>
+    </div>
+  </div>
+
+  <div class="lapisan" id="lapisAkhir">
+    <h1 class="judul" id="akhirJudul"></h1>
+    <p class="baris" id="akhirBaris"></p>
+    <p class="kecil" id="akhirKecil" style="opacity:0;transition:opacity 1.2s ease">sampai ngobrol besok</p>
+    <button class="tombol kalem bisa-klik" id="ulang" style="opacity:0">Lihat lagi dari awal</button>
+  </div>
+</div>
+
+<button class="tombol kalem" id="btnNggak" style="opacity:0;pointer-events:none">Nggak</button>
+<button id="suara">SUARA: NYALA</button>
+
+<script>
+"use strict";
+/* ============================================================
+   Untuk Pika - langit malam interaktif
+   Semua digambar pakai canvas, tanpa gambar atau library luar.
+   ============================================================ */
+
+// ---------- util kecil ----------
+const acak = (a, b) => a + Math.random() * (b - a);
+const jepit = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const Easing = {
+  outCubic: t => 1 - Math.pow(1 - t, 3),
+  inOutSine: t => -(Math.cos(Math.PI * t) - 1) / 2,
+  outBack: t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
+  outElastic: t => t === 0 || t === 1 ? t : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI) / 3) + 1,
+};
+const PALET = ["#ffb3d1", "#ffc9e0", "#e2c8ff", "#ffe2a3", "#ffd6e8", "#cdb8ff"];
+
+// ---------- canvas + devicePixelRatio ----------
+const cv = document.getElementById("langit");
+const ctx = cv.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+function ukurUlang() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  Langit.bangun();
+  if (Adegan.sekarang && Adegan.sekarang.ukur) Adegan.sekarang.ukur();
+}
+
+// ---------- sprite yang dirender sekali, biar ringan di HP ----------
+function spriteGlow(warna, ukuran) {
+  const c = document.createElement("canvas");
+  c.width = c.height = ukuran;
+  const g = c.getContext("2d");
+  const r = ukuran / 2;
+  const gr = g.createRadialGradient(r, r, 0, r, r, r);
+  gr.addColorStop(0, warna.replace("A", "1"));
+  gr.addColorStop(0.25, warna.replace("A", "0.55"));
+  gr.addColorStop(1, warna.replace("A", "0"));
+  g.fillStyle = gr; g.fillRect(0, 0, ukuran, ukuran);
+  return c;
+}
+// kurva hati parametrik: x = 16 sin^3 t, y = 13 cos t - 5 cos 2t - 2 cos 3t - cos 4t
+function jalurHati(g, cx, cy, s) {
+  g.beginPath();
+  for (let i = 0; i <= 64; i++) {
+    const t = (i / 64) * Math.PI * 2;
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    if (i === 0) g.moveTo(cx + x * s, cy - y * s); else g.lineTo(cx + x * s, cy - y * s);
+  }
+  g.closePath();
+}
+function spriteHati(warna) {
+  const u = 96, c = document.createElement("canvas");
+  c.width = c.height = u;
+  const g = c.getContext("2d");
+  g.shadowColor = warna; g.shadowBlur = 16;
+  jalurHati(g, u / 2, u / 2 + 2, 1.9);
+  const gr = g.createLinearGradient(0, 16, 0, 80);
+  gr.addColorStop(0, "#ffffff"); gr.addColorStop(0.35, warna); gr.addColorStop(1, warna);
+  g.fillStyle = gr; g.fill();
+  return c;
+}
+function spriteKilau() {
+  const u = 64, c = document.createElement("canvas");
+  c.width = c.height = u;
+  const g = c.getContext("2d"), r = u / 2;
+  g.drawImage(spriteGlow("rgba(255,240,250,A)", u), 0, 0);
+  g.fillStyle = "#fff";
+  g.beginPath();
+  // bintang empat sudut
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    const rr = i % 2 === 0 ? r * 0.9 : r * 0.14;
+    g.lineTo(r + Math.cos(a) * rr, r + Math.sin(a) * rr);
+  }
+  g.closePath(); g.fill();
+  return c;
+}
+const SPRITE = {
+  glowPutih: spriteGlow("rgba(255,255,255,A)", 64),
+  glowPink: spriteGlow("rgba(255,170,215,A)", 128),
+  glowEmas: spriteGlow("rgba(255,225,150,A)", 64),
+  glowLav: spriteGlow("rgba(200,180,255,A)", 128),
+  hati: PALET.map(spriteHati),
+  kilau: spriteKilau(),
+};
+
+// ---------- audio: dentingan lembut pakai WebAudio, aman kalau gagal ----------
+const Suara = {
+  ac: null, master: null, nyala: true,
+  mulai() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC || this.ac) return;
+      this.ac = new AC();
+      this.master = this.ac.createGain();
+      this.master.gain.value = 0.5;
+      this.master.connect(this.ac.destination);
+      this.ambient();
+    } catch (e) { this.ac = null; }
+  },
+  // pad latar yang pelan banget
+  ambient() {
+    const ac = this.ac, g = ac.createGain();
+    g.gain.value = 0; g.connect(this.master);
+    g.gain.linearRampToValueAtTime(0.045, ac.currentTime + 4);
+    [196, 246.94, 293.66, 392].forEach((f, i) => {
+      const o = ac.createOscillator(), lfo = ac.createOscillator(), lg = ac.createGain();
+      o.type = "sine"; o.frequency.value = f; o.detune.value = acak(-6, 6);
+      lfo.frequency.value = 0.07 + i * 0.03; lg.gain.value = 3;
+      lfo.connect(lg); lg.connect(o.detune);
+      o.connect(g); o.start(); lfo.start();
+    });
+  },
+  denting(nada = 0, keras = 0.18) {
+    if (!this.ac || !this.nyala) return;
+    try {
+      const ac = this.ac, t = ac.currentTime;
+      const skala = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66];
+      const f = skala[((nada % skala.length) + skala.length) % skala.length];
+      [1, 2.01].forEach((k, i) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = "sine"; o.frequency.value = f * k;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(keras / (i + 1.5), t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+        o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 1.7);
+      });
+    } catch (e) {}
+  },
+  arpeggio() { [0, 2, 4, 5].forEach((n, i) => setTimeout(() => this.denting(n, 0.16), i * 140)); },
+  setNyala(v) {
+    this.nyala = v;
+    if (this.master) this.master.gain.value = v ? 0.5 : 0;
+  },
+};
+
+// ---------- latar langit: gradasi, bintang parallax, bulan, awan ----------
+const Langit = {
+  lapisan: [], awan: [], waktu: 0, geserX: 0, geserY: 0,
+  bangun() {
+    const luas = W * H;
+    this.lapisan = [0.15, 0.4, 0.8].map((dalam, li) => {
+      const n = Math.round(luas / [2600, 5200, 11000][li]);
+      const arr = [];
+      for (let i = 0; i < n; i++) arr.push({
+        x: Math.random() * (W + 80) - 40, y: Math.random() * H * 0.92,
+        r: acak(0.4, 1.1) + li * 0.45, fase: acak(0, 6.28), laju: acak(0.6, 2.2),
+        warna: Math.random() < 0.15 ? "255,220,235" : Math.random() < 0.2 ? "220,210,255" : "255,255,255",
+      });
+      return { dalam, arr };
+    });
+    this.awan = [];
+    for (let i = 0; i < 6; i++) this.awan.push({
+      x: Math.random() * W, y: acak(H * 0.45, H * 0.95), s: acak(0.7, 1.6),
+      v: acak(4, 10), a: acak(0.05, 0.11),
+    });
+    // gradasi dibuat sekali per ukuran
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#070b2b"); g.addColorStop(0.38, "#1b1650");
+    g.addColorStop(0.7, "#45286f"); g.addColorStop(0.9, "#7b3f7f"); g.addColorStop(1, "#a85a8a");
+    this.gradasi = g;
+  },
+  posisiBulan() {
+    const potret = H > W;
+    const r = Math.max(26, Math.min(W, H) * (potret ? 0.085 : 0.07));
+    return { x: W * (potret ? 0.8 : 0.84), y: H * (potret ? 0.09 : 0.17) + r * 0.3, r };
+  },
+  update(dt, mx, my) {
+    this.waktu += dt;
+    // parallax ikut posisi jari/mouse, pelan-pelan
+    const tx = (mx / W - 0.5) * -30, ty = (my / H - 0.5) * -18;
+    this.geserX = lerp(this.geserX, tx, 1 - Math.pow(0.02, dt));
+    this.geserY = lerp(this.geserY, ty, 1 - Math.pow(0.02, dt));
+    for (const a of this.awan) { a.x += a.v * dt; if (a.x - 200 * a.s > W) a.x = -200 * a.s; }
+  },
+  gambar() {
+    ctx.fillStyle = this.gradasi; ctx.fillRect(0, 0, W, H);
+    const t = this.waktu;
+    // bintang
+    for (const lap of this.lapisan) {
+      const ox = this.geserX * lap.dalam, oy = this.geserY * lap.dalam;
+      for (const b of lap.arr) {
+        const kelip = 0.55 + 0.45 * Math.sin(t * b.laju + b.fase);
+        const x = b.x + ox, y = b.y + oy;
+        ctx.globalAlpha = kelip * (0.5 + lap.dalam * 0.6);
+        ctx.fillStyle = "rgb(" + b.warna + ")";
+        ctx.beginPath(); ctx.arc(x, y, b.r, 0, 6.283); ctx.fill();
+        if (b.r > 1.3) {
+          const s = b.r * 9 * kelip;
+          ctx.globalAlpha = kelip * 0.35;
+          ctx.drawImage(SPRITE.glowPutih, x - s / 2, y - s / 2, s, s);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    this.gambarBulan();
+    // awan tipis
+    for (const a of this.awan) {
+      ctx.globalAlpha = a.a;
+      for (let k = 0; k < 4; k++) {
+        const s = 220 * a.s * (1 - k * 0.15);
+        ctx.drawImage(SPRITE.glowLav, a.x + (k - 1.5) * 70 * a.s - s / 2, a.y - s / 4 + Math.sin(k * 2) * 10, s, s / 2.2);
+      }
+    }
+    ctx.globalAlpha = 1;
+  },
+  gambarBulan() {
+    const { x: bx, y: by, r } = this.posisiBulan();
+    const x = bx + this.geserX * 0.3, y = by + this.geserY * 0.3;
+    const denyut = 1 + Math.sin(this.waktu * 0.8) * 0.04;
+    // halo berlapis
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.35;
+    let s = r * 7 * denyut; ctx.drawImage(SPRITE.glowLav, x - s / 2, y - s / 2, s, s);
+    ctx.globalAlpha = 0.5;
+    s = r * 3.6 * denyut; ctx.drawImage(SPRITE.glowEmas, x - s / 2, y - s / 2, s, s);
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+    // badan bulan
+    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.1, x, y, r);
+    g.addColorStop(0, "#fffaf0"); g.addColorStop(0.7, "#ffeec8"); g.addColorStop(1, "#f6d9a8");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill();
+    // kawah halus
+    ctx.fillStyle = "rgba(220,180,140,0.18)";
+    [[-0.3, 0.2, 0.22], [0.25, -0.25, 0.15], [0.3, 0.35, 0.11], [-0.05, -0.45, 0.08]].forEach(([dx, dy, rr]) => {
+      ctx.beginPath(); ctx.arc(x + dx * r, y + dy * r, rr * r, 0, 6.283); ctx.fill();
+    });
+  },
+};
+
+// ---------- sistem partikel umum ----------
+class Partikel {
+  constructor(o) { Object.assign(this, { vx: 0, vy: 0, g: 0, gesek: 0.98, umur: 1, maks: 1, ukuran: 10, rot: 0, vrot: 0, jenis: "kilau", sprite: null, warna: null }, o); this.maks = this.umur; }
+  update(dt) {
+    this.vy += this.g * dt;
+    const f = Math.pow(this.gesek, dt * 60);
+    this.vx *= f; this.vy *= f;
+    this.x += this.vx * dt; this.y += this.vy * dt;
+    this.rot += this.vrot * dt; this.umur -= dt;
+    return this.umur > 0;
+  }
+  gambar() {
+    const t = this.umur / this.maks;
+    const a = t < 0.3 ? t / 0.3 : 1;
+    const masuk = Easing.outBack(jepit((1 - t) * 6, 0, 1));
+    const s = this.ukuran * masuk;
+    ctx.globalAlpha = a;
+    ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot);
+    ctx.drawImage(this.sprite, -s / 2, -s / 2, s, s);
+    ctx.restore();
+  }
+}
+const Partikels = {
+  list: [], batas: 900,
+  tambah(p) { if (this.list.length < this.batas) this.list.push(new Partikel(p)); },
+  update(dt) { this.list = this.list.filter(p => p.update(dt)); },
+  gambar() {
+    ctx.globalCompositeOperation = "lighter";
+    for (const p of this.list) if (p.jenis === "kilau") p.gambar();
+    ctx.globalCompositeOperation = "source-over";
+    for (const p of this.list) if (p.jenis === "hati") p.gambar();
+    ctx.globalAlpha = 1;
+  },
+  hatiAcak() { return SPRITE.hati[(Math.random() * SPRITE.hati.length) | 0]; },
+  ledakan(x, y, n = 18, kuat = 1) {
+    for (let i = 0; i < n; i++) {
+      const a = acak(0, 6.283), v = acak(60, 240) * kuat;
+      const hati = Math.random() < 0.55;
+      this.tambah({
+        x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40, g: hati ? -20 : 60, gesek: 0.95,
+        umur: acak(0.8, 1.6), ukuran: hati ? acak(12, 24) : acak(10, 20),
+        rot: hati ? acak(-0.4, 0.4) : acak(0, 6), vrot: acak(-2, 2),
+        jenis: hati ? "hati" : "kilau", sprite: hati ? this.hatiAcak() : SPRITE.kilau,
+      });
+    }
+  },
+  jejak(x, y) {
+    const hati = Math.random() < 0.3;
+    this.tambah({
+      x: x + acak(-4, 4), y: y + acak(-4, 4), vx: acak(-20, 20), vy: acak(-30, 10), g: hati ? -30 : 20,
+      umur: acak(0.5, 1), ukuran: hati ? acak(9, 14) : acak(7, 14), vrot: acak(-3, 3),
+      jenis: hati ? "hati" : "kilau", sprite: hati ? this.hatiAcak() : SPRITE.kilau,
+    });
+  },
+  // hujan hati buat perayaan
+  hujanHati(n) {
+    for (let i = 0; i < n; i++) this.tambah({
+      x: acak(0, W), y: H + acak(10, 120), vx: acak(-30, 30), vy: acak(-260, -120), g: 0, gesek: 0.995,
+      umur: acak(3, 5.5), ukuran: acak(14, 34), rot: acak(-0.3, 0.3), vrot: acak(-0.6, 0.6),
+      jenis: "hati", sprite: this.hatiAcak(),
+    });
+  },
+};
+
+// ---------- bintang jatuh ----------
+class BintangJatuh {
+  constructor() {
+    this.x = acak(W * 0.1, W * 0.9); this.y = acak(-20, H * 0.3);
+    const a = acak(0.35, 0.6) * (Math.random() < 0.5 ? 1 : -1) + Math.PI / 2 * (Math.random() < 0.5 ? 0 : 0);
+    const arah = Math.random() < 0.5 ? 1 : -1;
+    this.vx = Math.cos(a) * 620 * arah; this.vy = Math.abs(Math.sin(a)) * 620 * 0.7 + 180;
+    this.jejak = []; this.umur = acak(0.9, 1.4); this.maks = this.umur;
+  }
+  update(dt) {
+    this.x += this.vx * dt; this.y += this.vy * dt; this.umur -= dt;
+    this.jejak.push({ x: this.x, y: this.y });
+    if (this.jejak.length > 22) this.jejak.shift();
+    return this.umur > -0.4;
+  }
+  gambar() {
+    const a = jepit(this.umur / this.maks, 0, 1) * Easing.outCubic(jepit((this.maks - this.umur) * 4, 0, 1));
+    const n = this.jejak.length;
+    ctx.lineCap = "round";
+    for (let i = 1; i < n; i++) {
+      const p0 = this.jejak[i - 1], p1 = this.jejak[i], k = i / n;
+      ctx.strokeStyle = "rgba(255," + (220 + 35 * k | 0) + ",240," + (a * k * 0.9) + ")";
+      ctx.lineWidth = k * 2.6;
+      ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+    }
+    if (this.umur > 0) {
+      ctx.globalAlpha = a; ctx.globalCompositeOperation = "lighter";
+      ctx.drawImage(SPRITE.glowPutih, this.x - 14, this.y - 14, 28, 28);
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+    }
+  }
+}
+
+// ---------- kunang-kunang ----------
+class Kunang {
+  constructor() { this.reset(true); }
+  reset(awal) {
+    this.x = acak(0, W); this.y = awal ? acak(H * 0.35, H) : H + 20;
+    this.fase = acak(0, 6.28); this.laju = acak(8, 22); this.r = acak(10, 22);
+    this.sprite = Math.random() < 0.6 ? SPRITE.glowEmas : SPRITE.glowPink;
+  }
+  update(dt, t) {
+    this.y -= this.laju * dt;
+    this.x += Math.sin(t * 0.6 + this.fase) * 18 * dt;
+    if (this.y < H * 0.25) this.reset(false);
+  }
+  gambar(t) {
+    const nyala = 0.35 + 0.65 * Math.pow(Math.sin(t * 1.3 + this.fase) * 0.5 + 0.5, 2);
+    const tinggi = jepit((this.y - H * 0.25) / (H * 0.25), 0, 1);
+    ctx.globalAlpha = nyala * tinggi;
+    ctx.drawImage(this.sprite, this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
+  }
+}
+
+// ---------- teks mesin ketik ----------
+class MesinKetik {
+  constructor(el, cps = 26) { this.el = el; this.cps = cps; this.teks = ""; this.n = 0; this.selesai = true; this.onKetuk = null; }
+  mulai(teks) { this.teks = teks; this.n = 0; this.selesai = false; this.el.textContent = ""; this.el.classList.add("kursor"); }
+  update(dt) {
+    if (this.selesai) return;
+    const lama = this.n | 0;
+    // jeda kecil sesudah tanda baca biar terasa natural
+    const c = this.teks[lama] || "";
+    const lambat = ",.?!".includes(c) ? 0.25 : 1;
+    this.n += this.cps * dt * lambat;
+    if ((this.n | 0) !== lama) {
+      this.el.textContent = this.teks.slice(0, this.n | 0);
+      if (this.onKetuk && this.teks[lama] !== " ") this.onKetuk();
+    }
+    if (this.n >= this.teks.length) { this.selesaikan(); }
+  }
+  selesaikan() { this.n = this.teks.length; this.el.textContent = this.teks; this.selesai = true; }
+  hapusKursor() { this.el.classList.remove("kursor"); }
+}
+
+// ---------- tombol "Nggak" yang kabur ----------
+const btnNggak = document.getElementById("btnNggak");
+const btnBoleh = document.getElementById("btnBoleh");
+const Kabur = {
+  aktif: false, kali: 0,
+  kalimat: ["jawab jujur ya", "eh, kok kabur", "tombolnya malu kayaknya", "yakin mau itu?", "coba yang satunya aja", "hehe, nggak bisa"],
+  taruhAwal() {
+    const r = btnBoleh.getBoundingClientRect();
+    btnNggak.style.left = (r.right + 28) + "px";
+    btnNggak.style.top = r.top + "px";
+  },
+  terakhir: 0,
+  kabur(px, py) {
+    if (!this.aktif) return;
+    // pointer dan touch bisa nembak barengan, jadi dikasih jeda
+    const kini = performance.now();
+    if (kini - this.terakhir < 180) return;
+    this.terakhir = kini;
+    this.kali++;
+    const b = btnNggak.getBoundingClientRect(), bb = btnBoleh.getBoundingClientRect();
+    const pad = 16;
+    let x, y, coba = 0;
+    // cari posisi baru yang jauh dari jari dan nggak numpuk sama tombol Boleh
+    do {
+      x = acak(pad, W - b.width - pad); y = acak(H * 0.12, H - b.height - pad * 3);
+      coba++;
+    } while (coba < 40 && (Math.hypot(x + b.width / 2 - px, y + b.height / 2 - py) < Math.min(W, H) * 0.35 ||
+      (x < bb.right + 20 && x + b.width > bb.left - 20 && y < bb.bottom + 20 && y + b.height > bb.top - 20)));
+    btnNggak.style.left = x + "px"; btnNggak.style.top = y + "px";
+    const k = document.getElementById("tanyaKecil");
+    k.textContent = this.kalimat[Math.min(this.kali, this.kalimat.length - 1)];
+    // makin sering dikejar makin kecil
+    btnNggak.style.transform = "scale(" + Math.max(0.6, 1 - this.kali * 0.06) + ")";
+    Suara.denting(-this.kali, 0.07);
+  },
+  cekDekat(px, py) {
+    if (!this.aktif) return;
+    const b = btnNggak.getBoundingClientRect();
+    const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+    if (Math.abs(px - cx) < b.width / 2 + 40 && Math.abs(py - cy) < b.height / 2 + 34) this.kabur(px, py);
+  },
+};
+["pointerdown", "touchstart", "mouseenter", "click"].forEach(ev =>
+  btnNggak.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    const t = e.touches ? e.touches[0] : e;
+    Kabur.kabur(t.clientX, t.clientY);
+  }, { passive: false }));
+
+// ---------- adegan (state machine) ----------
+function lapis(id) { return document.getElementById(id); }
+function tampilkan(id) {
+  document.querySelectorAll(".lapisan").forEach(l => l.classList.toggle("aktif", l.id === id));
+}
+
+const AdeganAwal = {
+  masuk() { tampilkan("lapisAwal"); },
+  ketuk() { Suara.mulai(); document.getElementById("suara").classList.add("muncul"); Adegan.ganti(AdeganIntro); },
+  update() {},
+};
+
+const AdeganIntro = {
+  baris: [
+    "Semoga hari kamu hari ini nyenengin ya, atau minimal nggak terlalu capek.",
+    "Aku nggak tau mau ngomong apa sebenernya, jadi aku bikinin ini aja.",
+    "Makasih ya udah mau ngobrol sama aku akhir-akhir ini.",
+    "Oh iya, jangan tidur kemaleman ya.",
+  ],
+  masuk() {
+    tampilkan("lapisIntro");
+    this.i = -1; this.jeda = 0.9;
+    this.judul = new MesinKetik(lapis("introJudul"), 12);
+    this.isi = new MesinKetik(lapis("introBaris"), 30);
+    this.isi.el.textContent = ""; this.judul.el.textContent = "";
+    let n = 0;
+    this.judul.onKetuk = () => Suara.denting(n++ % 5, 0.05);
+    this.mulaiJudul = false;
+  },
+  lanjut() {
+    this.i++;
+    if (this.i >= this.baris.length) { Adegan.ganti(AdeganBintang); return; }
+    this.isi.el.style.opacity = 0;
+    setTimeout(() => { this.isi.el.style.opacity = 1; this.isi.mulai(this.baris[this.i]); }, 260);
+  },
+  ketuk() {
+    if (!this.mulaiJudul) return;
+    if (!this.judul.selesai) { this.judul.selesaikan(); return; }
+    if (!this.isi.selesai) { this.isi.selesaikan(); return; }
+    this.lanjut();
+  },
+  update(dt) {
+    if (!this.mulaiJudul) {
+      this.jeda -= dt;
+      if (this.jeda <= 0) { this.mulaiJudul = true; this.judul.mulai("Selamat malam, Pika"); }
+      return;
+    }
+    const tadi = this.judul.selesai;
+    this.judul.update(dt);
+    if (this.judul.selesai) {
+      this.judul.hapusKursor();
+      if (this.i === -1) { this.jeda2 = (this.jeda2 || 0) + dt; if (this.jeda2 > 0.6) this.lanjut(); }
+    }
+    this.isi.update(dt);
+  },
+};
+lapis("introBaris").style.transition = "opacity .25s ease";
+
+const AdeganBintang = {
+  pesan: [
+    "Kalau lagi capek, istirahat dulu nggak apa-apa kok. Kamu nggak harus selalu kuat.",
+    "Ngobrol sama kamu tuh enak, tiba-tiba aja udah malem.",
+    "Ketawa kamu itu nular, serius.",
+    "Semoga besok harimu lancar, apa pun rencanamu.",
+    "Udah, segitu dulu. Tapi ada satu pertanyaan lagi nih.",
+  ],
+  masuk() {
+    tampilkan("lapisBintang");
+    this.terkumpul = 0; this.waktu = 0;
+    this.kartu = lapis("kartu"); this.kartu.classList.remove("muncul");
+    lapis("hitung").textContent = "0 / 5";
+    lapis("lanjutBintang").classList.remove("muncul");
+    lapis("lanjutBintang").style.pointerEvents = "none";
+    this.ukur();
+  },
+  ukur() {
+    const potret = H > W;
+    // posisi bintang dalam pecahan layar, dijauhin dari teks atas dan kartu bawah
+    const pos = potret
+      ? [[0.2, 0.43], [0.78, 0.46], [0.48, 0.55], [0.22, 0.66], [0.76, 0.66]]
+      : [[0.16, 0.42], [0.36, 0.3], [0.62, 0.36], [0.84, 0.48], [0.5, 0.56]];
+    const lama = this.bintang || [];
+    this.bintang = pos.map(([fx, fy], i) => ({
+      x: fx * W, y: fy * H, fase: i * 1.3, diambil: lama[i] ? lama[i].diambil : false, animAmbil: lama[i] ? lama[i].animAmbil : 0,
+    }));
+  },
+  ketukDi(x, y) {
+    for (let i = 0; i < this.bintang.length; i++) {
+      const b = this.bintang[i];
+      if (b.diambil) continue;
+      if (Math.hypot(x - b.x, y - b.y) < 38) {
+        b.diambil = true;
+        Partikels.ledakan(b.x, b.y, 26, 1.1);
+        Suara.denting(this.terkumpul + 1, 0.2);
+        this.kartu.classList.remove("muncul");
+        const teks = this.pesan[this.terkumpul];
+        this.terkumpul++;
+        lapis("hitung").textContent = this.terkumpul + " / 5";
+        setTimeout(() => { this.kartu.textContent = teks; this.kartu.classList.add("muncul"); }, 180);
+        if (this.terkumpul === 5) setTimeout(() => {
+          const t = lapis("lanjutBintang");
+          this.kartu.style.bottom = "calc(max(70px, calc(env(safe-area-inset-bottom) + 60px)) + 74px)";
+          t.classList.add("muncul"); t.style.pointerEvents = "auto";
+        }, 1200);
+        return true;
+      }
+    }
+    return false;
+  },
+  ketuk() {},
+  update(dt) {
+    this.waktu += dt;
+    for (const b of this.bintang) if (b.diambil) b.animAmbil = Math.min(1, b.animAmbil + dt * 2);
+  },
+  gambar() {
+    const t = this.waktu;
+    for (const b of this.bintang) {
+      const muncul = Easing.outElastic(jepit(t * 0.9 - b.fase * 0.15, 0, 1));
+      const denyut = 1 + Math.sin(t * 2.4 + b.fase) * 0.12;
+      const a = b.diambil ? 1 - b.animAmbil : 1;
+      if (a <= 0) continue;
+      const s = 42 * muncul * denyut * (b.diambil ? 1 + b.animAmbil : 1);
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = a * 0.55;
+      ctx.drawImage(SPRITE.glowEmas, b.x - s * 1.6, b.y - s * 1.6, s * 3.2, s * 3.2);
+      ctx.globalAlpha = a;
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.sin(t + b.fase) * 0.2);
+      ctx.drawImage(SPRITE.kilau, -s / 2, -s / 2, s, s);
+      ctx.restore();
+      ctx.globalCompositeOperation = "source-over";
+    }
+    ctx.globalAlpha = 1;
+  },
+};
+lapis("lanjutBintang").addEventListener("click", e => { e.stopPropagation(); Suara.denting(3); Adegan.ganti(AdeganTanya); });
+
+const AdeganTanya = {
+  masuk() {
+    tampilkan("lapisTanya");
+    lapis("tanyaKecil").textContent = Kabur.kalimat[0];
+    Kabur.kali = 0;
+    btnNggak.style.transform = "";
+    setTimeout(() => {
+      Kabur.taruhAwal();
+      btnNggak.style.opacity = 1; btnNggak.style.pointerEvents = "auto"; Kabur.aktif = true;
+    }, 450);
+  },
+  keluar() { Kabur.aktif = false; btnNggak.style.opacity = 0; btnNggak.style.pointerEvents = "none"; },
+  ukur() { if (Kabur.aktif && Kabur.kali === 0) Kabur.taruhAwal(); },
+  ketuk() {},
+  update() {},
+};
+btnBoleh.addEventListener("click", e => {
+  e.stopPropagation();
+  const r = btnBoleh.getBoundingClientRect();
+  Partikels.ledakan(r.left + r.width / 2, r.top + r.height / 2, 60, 1.6);
+  Suara.arpeggio();
+  Adegan.ganti(AdeganAkhir, 0.5);
+});
+
+const AdeganAkhir = {
+  masuk() {
+    tampilkan("lapisAkhir");
+    this.t = 0; this.tahap = 0;
+    this.judul = new MesinKetik(lapis("akhirJudul"), 16);
+    this.isi = new MesinKetik(lapis("akhirBaris"), 26);
+    this.judul.el.textContent = ""; this.isi.el.textContent = "";
+    lapis("akhirKecil").style.opacity = 0;
+    lapis("ulang").style.opacity = 0;
+    this.judul.mulai("Yeay, makasih ya");
+    Partikels.hujanHati(70);
+  },
+  ketuk(x, y) { Partikels.ledakan(x, y, 22, 1.2); Suara.denting((Math.random() * 7) | 0, 0.12); },
+  update(dt) {
+    this.t += dt;
+    this.judul.update(dt); this.isi.update(dt);
+    if (this.tahap === 0 && this.judul.selesai) { this.judul.hapusKursor(); this.tahap = 1; this.tunggu = 0.7; }
+    if (this.tahap === 1) { this.tunggu -= dt; if (this.tunggu <= 0) { this.isi.mulai("Yaudah, tidur yang nyenyak ya, Pika."); this.tahap = 2; } }
+    if (this.tahap === 2 && this.isi.selesai) {
+      this.tahap = 3; this.isi.hapusKursor();
+      setTimeout(() => { lapis("akhirKecil").style.opacity = 0.8; }, 500);
+      setTimeout(() => { lapis("ulang").style.opacity = 1; }, 2500);
+    }
+    // sesekali tambah hati yang naik
+    if (Math.random() < dt * 4) Partikels.hujanHati(1);
+    if (Math.random() < dt * 0.5) Partikels.ledakan(acak(W * 0.15, W * 0.85), acak(H * 0.15, H * 0.5), 16, 0.8);
+  },
+};
+lapis("ulang").addEventListener("click", e => { e.stopPropagation(); AdeganBintang.bintang = null; Adegan.ganti(AdeganIntro); });
+
+// pengatur adegan dengan transisi fade lewat tirai gelap tipis
+const Adegan = {
+  sekarang: null, tirai: 0, arahTirai: 0, berikut: null, durasi: 0.45,
+  ganti(baru, durasi = 0.45) {
+    if (this.berikut) return;
+    this.berikut = baru; this.arahTirai = 1; this.durasi = durasi;
+  },
+  mulai(a) { this.sekarang = a; a.masuk(); },
+  update(dt) {
+    if (this.arahTirai !== 0) {
+      this.tirai = jepit(this.tirai + this.arahTirai * dt / this.durasi, 0, 1);
+      if (this.arahTirai === 1 && this.tirai >= 1) {
+        if (this.sekarang.keluar) this.sekarang.keluar();
+        this.sekarang = this.berikut; this.berikut = null; this.sekarang.masuk(); this.arahTirai = -1;
+      } else if (this.arahTirai === -1 && this.tirai <= 0) this.arahTirai = 0;
+    }
+    this.sekarang.update(dt);
+  },
+  gambarTirai() {
+    if (this.tirai <= 0) return;
+    ctx.globalAlpha = Easing.inOutSine(this.tirai) * 0.55;
+    ctx.fillStyle = "#070b2b"; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+    document.getElementById("ui").style.opacity = 1 - Easing.inOutSine(this.tirai);
+  },
+};
+
+// ---------- input: mouse dan sentuhan disatukan lewat pointer event ----------
+const Penunjuk = { x: -999, y: -999, adaMouse: false, jarak: 0 };
+window.addEventListener("pointermove", e => {
+  const dx = e.clientX - Penunjuk.x, dy = e.clientY - Penunjuk.y;
+  Penunjuk.jarak += Math.hypot(dx, dy);
+  Penunjuk.x = e.clientX; Penunjuk.y = e.clientY;
+  // jejak kilau, jumlahnya ikut jarak gerak
+  while (Penunjuk.jarak > 9) { Penunjuk.jarak -= 9; Partikels.jejak(Penunjuk.x, Penunjuk.y); }
+  if (Adegan.sekarang === AdeganTanya) Kabur.cekDekat(e.clientX, e.clientY);
+}, { passive: true });
+window.addEventListener("pointerdown", e => {
+  if (e.target.closest && e.target.closest("button")) return;
+  Penunjuk.x = e.clientX; Penunjuk.y = e.clientY;
+  Partikels.ledakan(e.clientX, e.clientY, 14, 0.8);
+  if (Adegan.berikut) return;
+  const a = Adegan.sekarang;
+  if (a === AdeganBintang) { a.ketukDi(e.clientX, e.clientY); return; }
+  if (a === AdeganTanya) { Kabur.cekDekat(e.clientX, e.clientY); return; }
+  a.ketuk(e.clientX, e.clientY);
+});
+window.addEventListener("keydown", e => {
+  if (e.code === "Space" || e.code === "Enter") {
+    e.preventDefault();
+    const a = Adegan.sekarang;
+    if (a === AdeganAwal || a === AdeganIntro) a.ketuk(W / 2, H / 2);
+  }
+});
+document.getElementById("suara").addEventListener("click", e => {
+  e.stopPropagation();
+  Suara.setNyala(!Suara.nyala);
+  e.target.textContent = Suara.nyala ? "SUARA: NYALA" : "SUARA: MATI";
+});
+window.addEventListener("resize", ukurUlang);
+document.addEventListener("visibilitychange", () => {
+  try { if (Suara.ac) document.hidden ? Suara.ac.suspend() : Suara.ac.resume(); } catch (e) {}
+});
+
+// ---------- loop utama ----------
+let kunang = [], bintangJatuh = [], tadi = performance.now(), jedaJatuh = 2.5;
+function mulaiSemua() {
+  ukurUlang();
+  kunang = Array.from({ length: Math.round(jepit(W * H / 32000, 12, 34)) }, () => new Kunang());
+  Adegan.mulai(AdeganAwal);
+  requestAnimationFrame(loop);
+}
+function loop(sek) {
+  const dt = Math.min(0.05, (sek - tadi) / 1000); tadi = sek;
+  Langit.update(dt, Penunjuk.x < 0 ? W / 2 : Penunjuk.x, Penunjuk.y < 0 ? H / 2 : Penunjuk.y);
+  jedaJatuh -= dt;
+  if (jedaJatuh <= 0) { bintangJatuh.push(new BintangJatuh()); jedaJatuh = acak(2.5, 6); }
+  bintangJatuh = bintangJatuh.filter(b => b.update(dt));
+  for (const k of kunang) k.update(dt, Langit.waktu);
+  Partikels.update(dt);
+  Adegan.update(dt);
+
+  Langit.gambar();
+  for (const b of bintangJatuh) b.gambar();
+  ctx.globalCompositeOperation = "lighter";
+  for (const k of kunang) k.gambar(Langit.waktu);
+  ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+  if (Adegan.sekarang && Adegan.sekarang.gambar) Adegan.sekarang.gambar();
+  Partikels.gambar();
+  Adegan.gambarTirai();
+  if (Adegan.tirai <= 0) document.getElementById("ui").style.opacity = 1;
+  requestAnimationFrame(loop);
+}
+
+// pintu buat tes otomatis, nggak ganggu pemakaian biasa
+window.__pika = { Adegan, AdeganBintang, AdeganIntro, Partikels, BintangJatuh, bintangJatuh: () => bintangJatuh, tambahJatuh: () => bintangJatuh.push(new BintangJatuh()) };
+
+if (document.fonts && document.fonts.ready) {
+  Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1200))]).then(mulaiSemua);
+} else mulaiSemua();
+</script>
+</body>
+</html>
