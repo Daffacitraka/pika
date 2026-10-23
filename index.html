@@ -110,6 +110,73 @@
   }
   #suara.muncul { opacity: .7; }
   #ulang { margin-top: 30px; }
+  /* ---------- adegan pilih tempat dan waktu ---------- */
+  .lapisan.atas-saja { justify-content: flex-start; padding: max(56px, calc(env(safe-area-inset-top) + 44px)) 0 0; }
+  .lapisan.atas-saja .judul { font-size: clamp(25px, 5.6vw, 44px); padding: 0 20px; }
+  .lapisan.atas-saja .kecil { margin: 8px 0 0; padding: 0 20px; }
+  .gulir {
+    width: 100%; max-width: 1040px; flex: 1; min-height: 0; margin-top: 16px;
+    overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain;
+    padding: 12px 20px 130px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 90px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 90px), transparent 100%);
+    scrollbar-width: thin; scrollbar-color: rgba(255, 200, 230, .35) transparent;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+  .tempat {
+    font: inherit; color: var(--teks); text-align: left; cursor: pointer; outline: none;
+    padding: 16px 18px; border-radius: 18px; touch-action: pan-y;
+    background: rgba(40, 28, 80, .5); border: 1px solid rgba(255, 210, 235, .2);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transition: transform .25s cubic-bezier(.2, .9, .3, 1.4), background .3s ease, border-color .3s ease, box-shadow .3s ease;
+  }
+  .tempat:hover { transform: translateY(-2px); border-color: rgba(255, 210, 235, .45); }
+  .tempat.dipilih {
+    background: linear-gradient(135deg, rgba(255, 175, 215, .32), rgba(200, 175, 255, .28));
+    border-color: rgba(255, 205, 230, .9);
+    box-shadow: 0 0 0 1px rgba(255, 205, 230, .5), 0 8px 30px rgba(255, 150, 205, .35);
+    transform: scale(1.02);
+  }
+  @media (orientation: portrait) { .lapisan.atas-saja { padding-top: calc(env(safe-area-inset-top) + 128px); } }
+  .tempat { display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; }
+  .tempat .nama { display: block; font-size: 17px; font-weight: 700; }
+  .tempat .area { display: block; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-top: 4px; opacity: .9; }
+  .tempat .vibe { display: block; font-size: 14.5px; line-height: 1.45; margin-top: 7px; opacity: .82; }
+  .isian {
+    width: 100%; margin-top: 10px; padding: 11px 14px; border-radius: 12px;
+    font: inherit; font-size: 16px; color: var(--teks); outline: none;
+    background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 210, 235, .3);
+    user-select: text; -webkit-user-select: text; touch-action: manipulation;
+  }
+  .isian::placeholder { color: rgba(255, 240, 250, .5); }
+  .isian:focus { border-color: rgba(255, 205, 230, .85); }
+  .bagian { max-width: 760px; margin: 0 auto 26px; text-align: left; }
+  .bagian h2 { font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin: 0 0 12px; opacity: .9; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--teks); cursor: pointer; outline: none;
+    padding: 10px 16px; border-radius: 999px; touch-action: pan-y;
+    background: rgba(40, 28, 80, .5); border: 1px solid rgba(255, 210, 235, .25);
+    transition: transform .2s cubic-bezier(.2, .9, .3, 1.4), background .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .chip small { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-left: 6px; font-weight: 700; }
+  .chip:hover { transform: translateY(-1px); }
+  .chip.dipilih {
+    background: linear-gradient(135deg, #ffd3e6, #e6d7ff); color: #3b2150; border-color: transparent;
+    box-shadow: 0 6px 20px rgba(255, 160, 210, .4);
+  }
+  .chip.dipilih small { color: #8a4a78; }
+  .bar-bawah {
+    position: absolute; left: 0; right: 0; bottom: max(22px, calc(env(safe-area-inset-bottom) + 12px));
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    opacity: 0; transform: translateY(16px); transition: opacity .4s ease, transform .4s cubic-bezier(.2, .9, .3, 1.3);
+  }
+  .bar-bawah.muncul { opacity: 1; transform: none; }
+  .bar-bawah .ringkas { font-size: 14px; opacity: .85; padding: 0 20px; text-shadow: 0 1px 8px rgba(10, 0, 30, .8); }
+  .tombol:disabled { opacity: .45; cursor: default; transform: none; box-shadow: none; }
+  .tautan { font: inherit; background: none; border: 0; color: var(--teks); opacity: .7; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; margin-top: 10px; }
+  #cobaLagi { margin-top: 18px; font-size: 14px; padding: 10px 20px; opacity: 0; }
+
 </style>
 </head>
 <body>
@@ -145,10 +212,40 @@
     </div>
   </div>
 
+  <div class="lapisan" id="lapisYeay">
+    <h1 class="judul" id="yeayJudul"></h1>
+  </div>
+
+  <div class="lapisan atas-saja" id="lapisTempat">
+    <h1 class="judul">Kalau gitu, mau ketemu di mana?</h1>
+    <p class="kecil">pilih aja satu, nanti aku yang nyamperin</p>
+    <div class="gulir bisa-klik" id="gulirTempat"><div class="grid" id="gridTempat"></div></div>
+    <div class="bar-bawah" id="barTempat">
+      <button class="tombol bisa-klik" id="lanjutWaktu">Lanjut, pilih waktunya</button>
+    </div>
+  </div>
+
+  <div class="lapisan atas-saja" id="lapisWaktu">
+    <h1 class="judul">Kapan enaknya?</h1>
+    <p class="kecil" id="waktuSub">santai aja, yang kamu bisa</p>
+    <div class="gulir bisa-klik" id="gulirWaktu">
+      <div class="bagian"><h2>Hari</h2><div class="chips" id="chipHari"></div></div>
+      <div class="bagian"><h2>Jam</h2><div class="chips" id="chipJam"></div>
+        <input class="isian" id="isiJam" type="text" maxlength="40" autocomplete="off" placeholder="atau tulis sendiri, misal 15.30 atau sore aja">
+      </div>
+      <div class="bagian" style="text-align:center"><button class="tautan bisa-klik" id="gantiTempat">ganti tempat</button></div>
+    </div>
+    <div class="bar-bawah muncul" id="barWaktu">
+      <div class="ringkas" id="ringkasan">pilih hari sama jamnya dulu ya</div>
+      <button class="tombol bisa-klik" id="kirimPilihan" disabled>Kirim pilihan</button>
+    </div>
+  </div>
+
   <div class="lapisan" id="lapisAkhir">
     <h1 class="judul" id="akhirJudul"></h1>
     <p class="baris" id="akhirBaris"></p>
     <p class="kecil" id="akhirKecil" style="opacity:0;transition:opacity 1.2s ease">sampai ngobrol besok</p>
+    <button class="tombol kalem bisa-klik" id="cobaLagi" style="display:none">WhatsApp-nya belum kebuka? Ketuk di sini</button>
     <button class="tombol kalem bisa-klik" id="ulang" style="opacity:0">Lihat lagi dari awal</button>
   </div>
 </div>
@@ -736,6 +833,240 @@ btnBoleh.addEventListener("click", e => {
   const r = btnBoleh.getBoundingClientRect();
   Partikels.ledakan(r.left + r.width / 2, r.top + r.height / 2, 60, 1.6);
   Suara.arpeggio();
+  Adegan.ganti(AdeganYeay, 0.5);
+});
+
+// ---------- yeay, perayaan sebentar sebelum pilih tempat ----------
+const AdeganYeay = {
+  masuk() {
+    tampilkan("lapisYeay");
+    this.judul = new MesinKetik(lapis("yeayJudul"), 16);
+    this.judul.el.textContent = "";
+    this.judul.mulai("Yeay, makasih ya");
+    this.tunggu = 1.8;
+    Partikels.hujanHati(70);
+  },
+  ketuk(x, y) { Partikels.ledakan(x, y, 22, 1.2); Suara.denting((Math.random() * 7) | 0, 0.12); },
+  update(dt) {
+    this.judul.update(dt);
+    if (Math.random() < dt * 4) Partikels.hujanHati(1);
+    if (this.judul.selesai) {
+      this.judul.hapusKursor();
+      this.tunggu -= dt;
+      if (this.tunggu <= 0) Adegan.ganti(AdeganTempat, 0.5);
+    }
+  },
+};
+
+// ---------- data tempat ----------
+const TEMPAT = [
+  ["Tekodeko Koffiehuis", "Kota Lama", "Rumah kolonial dengan rooftop, tenang dan vintage"],
+  ["Sedjenak Koffie", "Kota Lama", "Di ujung jalan, homey dan nggak rame"],
+  ["Hero Coffee Indonesia", "Kota Lama", "Bangunan kolonial, interior retro"],
+  ["Spiegel All Day Bar & Dining", "Kota Lama", "Gedung tua, lampunya temaram"],
+  ["Kafe Gethe", "Sekayu", "Rumah tua tiga lantai nuansa kampung Jawa"],
+  ["Toko Oen", "Jl. Pemuda", "Es krim legendaris, suasana tempo dulu"],
+  ["Antarsukha Coffee", "Gajahmada", "Hangat dan tenang"],
+  ["11/12 Rooftop Bar Artotel", "Gajahmada", "Rooftop, view kota 360 derajat"],
+  ["SkyLine Lounge Gumaya", "Gajahmada", "City light dari lantai 17"],
+  ["Lingkar Coffee & Idea", "Sekayu", "Cozy, enak duduk dekat jendela"],
+];
+const NOMOR_WA = "6285546639495";
+
+// pilihan Pika disimpan di sini
+const Pilihan = {
+  tempat: null,      // index TEMPAT, atau "lain"
+  tempatLain: "",
+  hari: null,        // {panjang:"Sabtu 24 Oktober"} atau "terserah"
+  jam: null,         // "19.00", "terserah", atau "teks"
+  jamLain: "",
+  urlTerakhir: "",
+  reset() { this.tempat = null; this.tempatLain = ""; this.hari = null; this.jam = null; this.jamLain = ""; this.urlTerakhir = ""; },
+  namaTempat() {
+    if (this.tempat === "lain") return this.tempatLain.trim();
+    return this.tempat === null ? "" : TEMPAT[this.tempat][0];
+  },
+  siapWaktu() {
+    const jamOk = this.jam === "terserah" || (this.jam === "teks" ? this.jamLain.trim() !== "" : !!this.jam);
+    return !!this.hari && jamOk;
+  },
+  teksJam() {
+    if (this.jam === "terserah") return "";
+    const t = this.jam === "teks" ? this.jamLain.trim() : this.jam;
+    return /^\d/.test(t) ? "jam " + t : t;
+  },
+  // susun pesan WA dari sudut pandang Pika
+  pesan() {
+    const nama = this.namaTempat();
+    const hariT = this.hari === "terserah" ? "" : "hari " + this.hari.panjang;
+    const jamT = this.teksJam();
+    let waktu;
+    if (hariT && jamT) waktu = hariT + " " + jamT;
+    else if (hariT) waktu = hariT + ", jamnya terserah kamu";
+    else if (jamT) waktu = jamT + ", harinya terserah kamu";
+    else waktu = "";
+    if (nama) {
+      return "Aku pilih " + nama + " buat ketemuan, " + (waktu || "waktunya terserah kamu");
+    }
+    // tempat diserahin ke dia
+    if (waktu) return "Tempatnya terserah kamu aja, yang penting ketemuan " + waktu;
+    return "Tempat sama waktunya terserah kamu aja, aku ikut";
+  },
+  url() { return "https://wa.me/" + NOMOR_WA + "?text=" + encodeURIComponent(this.pesan()); },
+};
+
+// tanggal 7 hari ke depan pakai zona Asia/Jakarta
+const NAMA_HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+const NAMA_BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+function tujuhHari() {
+  let y, m, d;
+  try {
+    const f = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    [y, m, d] = f.split("-").map(Number);
+  } catch (e) {
+    // cadangan: geser manual ke UTC+7
+    const j = new Date(Date.now() + 7 * 3600e3);
+    y = j.getUTCFullYear(); m = j.getUTCMonth() + 1; d = j.getUTCDate();
+  }
+  const hasil = [];
+  for (let i = 1; i <= 7; i++) {
+    const t = new Date(Date.UTC(y, m - 1, d + i));
+    const hr = NAMA_HARI[t.getUTCDay()], tg = t.getUTCDate(), bl = NAMA_BULAN[t.getUTCMonth()];
+    hasil.push({ label: hr + ", " + tg + " " + bl.slice(0, 3), panjang: hr + " " + tg + " " + bl, besok: i === 1 });
+  }
+  return hasil;
+}
+
+function buatEl(tag, kelas, teks) { const e = document.createElement(tag); if (kelas) e.className = kelas; if (teks != null) e.textContent = teks; return e; }
+function burstDari(el, n = 16) {
+  const r = el.getBoundingClientRect();
+  Partikels.ledakan(r.left + r.width / 2, r.top + r.height / 2, n, 0.9);
+}
+
+// ---------- adegan pilih tempat ----------
+const AdeganTempat = {
+  dibangun: false,
+  bangun() {
+    const grid = lapis("gridTempat");
+    grid.innerHTML = "";
+    TEMPAT.forEach(([nama, area, vibe], i) => {
+      const k = buatEl("button", "tempat bisa-klik");
+      k.dataset.i = i;
+      k.append(buatEl("span", "nama", nama), buatEl("span", "area", area), buatEl("span", "vibe", vibe));
+      k.addEventListener("click", e => { e.stopPropagation(); this.pilih(i, k); });
+      grid.append(k);
+    });
+    // kartu tambahan: tempat lain atau terserah
+    const lain = buatEl("div", "tempat bisa-klik");
+    lain.setAttribute("role", "button"); lain.tabIndex = 0;
+    lain.dataset.i = "lain";
+    const isi = buatEl("input", "isian");
+    isi.type = "text"; isi.maxLength = 60; isi.autocomplete = "off"; isi.id = "isiTempat";
+    isi.placeholder = "tulis tempatnya, atau kosongin aja";
+    lain.append(buatEl("span", "nama", "Tempat lain / terserah kamu"), buatEl("span", "area", "bebas"),
+      buatEl("span", "vibe", "Punya tempat favorit sendiri? Tulis aja. Kalau dikosongin, berarti aku yang pilihin."), isi);
+    lain.addEventListener("click", e => { e.stopPropagation(); if (e.target !== isi) this.pilih("lain", lain); });
+    isi.addEventListener("focus", () => { if (Pilihan.tempat !== "lain") this.pilih("lain", lain); });
+    isi.addEventListener("input", () => { Pilihan.tempatLain = isi.value; });
+    isi.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") isi.blur(); });
+    grid.append(lain);
+    this.dibangun = true;
+  },
+  pilih(i, el) {
+    Pilihan.tempat = i;
+    document.querySelectorAll("#gridTempat .tempat").forEach(k => k.classList.toggle("dipilih", k === el));
+    burstDari(el, 18);
+    Suara.denting(typeof i === "number" ? i : 6, 0.14);
+    lapis("barTempat").classList.add("muncul");
+  },
+  masuk() {
+    if (!this.dibangun) this.bangun();
+    tampilkan("lapisTempat");
+    const ada = Pilihan.tempat !== null;
+    lapis("barTempat").classList.toggle("muncul", ada);
+  },
+  ketuk(x, y) {},
+  update(dt) { if (Math.random() < dt * 0.6) Partikels.hujanHati(1); },
+};
+lapis("lanjutWaktu").addEventListener("click", e => {
+  e.stopPropagation();
+  if (Pilihan.tempat === null) return;
+  Suara.denting(4);
+  Adegan.ganti(AdeganWaktu);
+});
+
+// ---------- adegan pilih waktu ----------
+const JAM = ["10.00", "13.00", "16.00", "19.00", "20.00"];
+const AdeganWaktu = {
+  bangun() {
+    const ch = lapis("chipHari"); ch.innerHTML = "";
+    tujuhHari().forEach(h => {
+      const c = buatEl("button", "chip bisa-klik", h.label);
+      if (h.besok) c.append(buatEl("small", null, "besok"));
+      c.addEventListener("click", e => { e.stopPropagation(); this.pilihHari(h, c); });
+      ch.append(c);
+    });
+    const ts = buatEl("button", "chip bisa-klik", "Terserah kamu");
+    ts.addEventListener("click", e => { e.stopPropagation(); this.pilihHari("terserah", ts); });
+    ch.append(ts);
+
+    const cj = lapis("chipJam"); cj.innerHTML = "";
+    JAM.forEach(j => {
+      const c = buatEl("button", "chip bisa-klik", j);
+      c.addEventListener("click", e => { e.stopPropagation(); this.pilihJam(j, c); });
+      cj.append(c);
+    });
+    const tj = buatEl("button", "chip bisa-klik", "Terserah kamu");
+    tj.addEventListener("click", e => { e.stopPropagation(); this.pilihJam("terserah", tj); });
+    cj.append(tj);
+    const isi = lapis("isiJam");
+    isi.value = "";
+    isi.oninput = () => {
+      Pilihan.jamLain = isi.value;
+      if (isi.value.trim()) { Pilihan.jam = "teks"; this.tandai("#chipJam", null); }
+      else if (Pilihan.jam === "teks") Pilihan.jam = null;
+      this.segarkan();
+    };
+    isi.onkeydown = e => { e.stopPropagation(); if (e.key === "Enter") isi.blur(); };
+  },
+  tandai(sel, el) { document.querySelectorAll(sel + " .chip").forEach(c => c.classList.toggle("dipilih", c === el)); },
+  pilihHari(h, el) {
+    Pilihan.hari = h; this.tandai("#chipHari", el); burstDari(el, 12); Suara.denting(2, 0.1); this.segarkan();
+  },
+  pilihJam(j, el) {
+    Pilihan.jam = j; Pilihan.jamLain = ""; lapis("isiJam").value = "";
+    this.tandai("#chipJam", el); burstDari(el, 12); Suara.denting(5, 0.1); this.segarkan();
+  },
+  segarkan() {
+    const siap = Pilihan.siapWaktu();
+    lapis("kirimPilihan").disabled = !siap;
+    lapis("ringkasan").textContent = siap ? Pilihan.pesan() : "pilih hari sama jamnya dulu ya";
+  },
+  masuk() {
+    tampilkan("lapisWaktu");
+    const nama = Pilihan.namaTempat();
+    lapis("waktuSub").textContent = nama ? "biar aku siap-siap ke " + nama : "santai aja, yang kamu bisa";
+    if (!this.dibangun) { this.bangun(); this.dibangun = true; }
+    this.segarkan();
+  },
+  ketuk() {},
+  update(dt) { if (Math.random() < dt * 0.6) Partikels.hujanHati(1); },
+};
+lapis("gantiTempat").addEventListener("click", e => { e.stopPropagation(); Adegan.ganti(AdeganTempat); });
+
+// buka WhatsApp; di HP langsung ke aplikasi, di laptop ke WA Web
+function bukaWA(url) {
+  let w = null;
+  try { w = window.open(url, "_blank"); } catch (e) { w = null; }
+  if (!w) { try { window.location.href = url; } catch (e) {} }
+}
+lapis("kirimPilihan").addEventListener("click", e => {
+  e.stopPropagation();
+  if (!Pilihan.siapWaktu()) return;
+  Pilihan.urlTerakhir = Pilihan.url();
+  burstDari(e.currentTarget, 40);
+  Suara.arpeggio();
+  bukaWA(Pilihan.urlTerakhir);
   Adegan.ganti(AdeganAkhir, 0.5);
 });
 
@@ -748,8 +1079,10 @@ const AdeganAkhir = {
     this.judul.el.textContent = ""; this.isi.el.textContent = "";
     lapis("akhirKecil").style.opacity = 0;
     lapis("ulang").style.opacity = 0;
-    this.judul.mulai("Yeay, makasih ya");
-    Partikels.hujanHati(70);
+    const coba = lapis("cobaLagi");
+    coba.style.display = Pilihan.urlTerakhir ? "" : "none"; coba.style.opacity = 0;
+    this.judul.mulai("Sip, sampai ketemu ya");
+    Partikels.hujanHati(50);
   },
   ketuk(x, y) { Partikels.ledakan(x, y, 22, 1.2); Suara.denting((Math.random() * 7) | 0, 0.12); },
   update(dt) {
@@ -760,6 +1093,7 @@ const AdeganAkhir = {
     if (this.tahap === 2 && this.isi.selesai) {
       this.tahap = 3; this.isi.hapusKursor();
       setTimeout(() => { lapis("akhirKecil").style.opacity = 0.8; }, 500);
+      setTimeout(() => { lapis("cobaLagi").style.opacity = 0.85; }, 1500);
       setTimeout(() => { lapis("ulang").style.opacity = 1; }, 2500);
     }
     // sesekali tambah hati yang naik
@@ -767,7 +1101,12 @@ const AdeganAkhir = {
     if (Math.random() < dt * 0.5) Partikels.ledakan(acak(W * 0.15, W * 0.85), acak(H * 0.15, H * 0.5), 16, 0.8);
   },
 };
-lapis("ulang").addEventListener("click", e => { e.stopPropagation(); AdeganBintang.bintang = null; Adegan.ganti(AdeganIntro); });
+lapis("cobaLagi").addEventListener("click", e => { e.stopPropagation(); if (Pilihan.urlTerakhir) bukaWA(Pilihan.urlTerakhir); });
+lapis("ulang").addEventListener("click", e => {
+  e.stopPropagation(); AdeganBintang.bintang = null;
+  Pilihan.reset(); AdeganTempat.dibangun = false; AdeganWaktu.dibangun = false;
+  Adegan.ganti(AdeganIntro);
+});
 
 // pengatur adegan dengan transisi fade lewat tirai gelap tipis
 const Adegan = {
@@ -863,7 +1202,7 @@ function loop(sek) {
 }
 
 // pintu buat tes otomatis, nggak ganggu pemakaian biasa
-window.__pika = { Adegan, AdeganBintang, AdeganIntro, Partikels, BintangJatuh, bintangJatuh: () => bintangJatuh, tambahJatuh: () => bintangJatuh.push(new BintangJatuh()) };
+window.__pika = { Pilihan, AdeganTempat, AdeganWaktu, Adegan, AdeganBintang, AdeganIntro, Partikels, BintangJatuh, bintangJatuh: () => bintangJatuh, tambahJatuh: () => bintangJatuh.push(new BintangJatuh()) };
 
 if (document.fonts && document.fonts.ready) {
   Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1200))]).then(mulaiSemua);
